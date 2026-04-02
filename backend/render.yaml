@@ -1,51 +1,10 @@
-# render.yaml
 services:
-  # Backend API Service
   - type: web
-    name: po-backend
+    name: po-backends
     runtime: python
-    repo: https://github.com/Junaidafju/po-automation-system
-    branch: main
     plan: free
-    buildCommand: |
-      cd backend
-      pip install -r requirements.txt
-    startCommand: |
-      cd backend
-      gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      - key: UPLOAD_DIR
-        value: /tmp/uploads
-      - key: ALLOWED_ORIGINS
-        value: https://po-frontend.onrender.com,https://po-backend.onrender.com
-      - key: SECRET_KEY
-        generateValue: true
-      - key: DEBUG
-        value: false
-    healthCheckPath: /health
-
-  # Frontend Static Site
-  - type: web
-    name: po-frontend
-    runtime: static
-    repo: https://github.com/Junaidafju/po-automation-system
-    branch: main
-    plan: free
-    buildCommand: |
-      cd frontend
-      npm install
-      npm run build
-    staticPublishPath: ./frontend/build
-    envVars:
-      - key: REACT_APP_API_URL
-        value: https://po-backend.onrender.com
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: no-cache
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
