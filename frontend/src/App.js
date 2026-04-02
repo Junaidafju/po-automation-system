@@ -1,3 +1,6 @@
+// At the top of App.js, replace hardcoded URLs with:
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// Then use API_URL everywhere instead of 'http://localhost:8000'
 import React, { useState, useEffect } from 'react';
 import { message, Button, Table, Space, Card, Statistic, Row, Col, Spin, Modal, Input, Form } from 'antd';
 import { 
