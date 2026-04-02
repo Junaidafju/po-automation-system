@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Upload, Button, message, List, Tag, Spin } from 'antd';
 import { UploadOutlined, FilePdfOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import axios from 'axios';
-
+// At the top of UploadSection.js
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 function UploadSection({ onUploadComplete }) {
   const [uploading, setUploading] = useState(false);
   const [fileList, setFileList] = useState([]);
@@ -25,12 +26,10 @@ function UploadSection({ onUploadComplete }) {
       console.log('Uploading file:', file.name);
       
       try {
-        const response = await axios.post('http://localhost:8000/api/v1/upload/pdf', formData, {
-          headers: { 
-            'Content-Type': 'multipart/form-data'
-          },
-          timeout: 30000
-        });
+        // Then in your upload function:
+const response = await axios.post(`${API_URL}/api/v1/upload/pdf`, formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+}); 
         
         results.push({
           name: file.name,

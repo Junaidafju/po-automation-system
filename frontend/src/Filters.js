@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Select, Button, Space, Card, Tag, Input, Row, Col } from 'antd';
 import { FilterOutlined, ClearOutlined, SearchOutlined } from '@ant-design/icons';
-
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const { Option } = Select;
 const { Search } = Input;
 

@@ -1,6 +1,8 @@
-// At the top of App.js, replace hardcoded URLs with:
+// ============================================
+// API Configuration - USE THIS VARIABLE
+// ============================================
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-// Then use API_URL everywhere instead of 'http://localhost:8000'
+
 import React, { useState, useEffect } from 'react';
 import { message, Button, Table, Space, Card, Statistic, Row, Col, Spin, Modal, Input, Form } from 'antd';
 import { 
@@ -36,6 +38,10 @@ function App() {
   const [gbpAmount, setGbpAmount] = useState(null);
   const [exchangeRate, setExchangeRate] = useState(null);
 
+  // Debug log to verify API_URL
+  console.log('🔗 Backend API URL:', API_URL);
+  console.log('🌍 Environment:', process.env.NODE_ENV);
+
   // Check authentication on load
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -58,7 +64,8 @@ function App() {
 
   const fetchExchangeRate = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/currency/rate');
+      // ✅ FIXED: Use API_URL instead of hardcoded localhost
+      const response = await fetch(`${API_URL}/api/v1/currency/rate`);
       const data = await response.json();
       setExchangeRate(data.usd_to_gbp);
     } catch (error) {
@@ -79,7 +86,8 @@ function App() {
   const handleLogin = async (values) => {
     setLoginLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+      // ✅ FIXED: Use API_URL instead of hardcoded localhost
+      const response = await fetch(`${API_URL}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values)
@@ -99,7 +107,7 @@ function App() {
         message.error(data.detail || 'Invalid username or password');
       }
     } catch (error) {
-      message.error('Login failed. Make sure backend is running on port 8000');
+      message.error(`Login failed. Make sure backend is running at ${API_URL}`);
     } finally {
       setLoginLoading(false);
     }
@@ -121,14 +129,14 @@ function App() {
       const token = localStorage.getItem('auth_token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
       
-      // Fetch KPI data
-      const kpiResponse = await fetch('http://localhost:8000/api/v1/dashboard/kpi', { headers });
+      // ✅ FIXED: Use API_URL instead of hardcoded localhost
+      const kpiResponse = await fetch(`${API_URL}/api/v1/dashboard/kpi`, { headers });
       if (!kpiResponse.ok) throw new Error(`KPI API error: ${kpiResponse.status}`);
       const kpiData = await kpiResponse.json();
       setKpi(kpiData);
       
-      // Fetch orders
-      const ordersResponse = await fetch('http://localhost:8000/api/v1/orders/', { headers });
+      // ✅ FIXED: Use API_URL instead of hardcoded localhost
+      const ordersResponse = await fetch(`${API_URL}/api/v1/orders/`, { headers });
       if (!ordersResponse.ok) throw new Error(`Orders API error: ${ordersResponse.status}`);
       const ordersData = await ordersResponse.json();
       setOrders(ordersData);
@@ -136,7 +144,7 @@ function App() {
     } catch (err) {
       console.error('Fetch error:', err);
       setError(err.message);
-      message.error('Failed to load data from backend');
+      message.error(`Failed to load data from backend at ${API_URL}`);
     } finally {
       setLoading(false);
     }
@@ -201,7 +209,8 @@ function App() {
       onOk: async () => {
         try {
           const token = localStorage.getItem('auth_token');
-          const response = await fetch(`http://localhost:8000/api/v1/orders/${orderId}`, {
+          // ✅ FIXED: Use API_URL instead of hardcoded localhost
+          const response = await fetch(`${API_URL}/api/v1/orders/${orderId}`, {
             method: 'DELETE',
             headers: token ? { 'Authorization': `Bearer ${token}` } : {}
           });
@@ -283,7 +292,7 @@ function App() {
     return (
       <div style={{ padding: 50, textAlign: 'center' }}>
         <Spin size="large" tip="Loading dashboard..." />
-        <p>Connecting to backend at http://localhost:8000</p>
+        <p>Connecting to backend at {API_URL}</p>
       </div>
     );
   }
@@ -293,6 +302,7 @@ function App() {
       <div style={{ padding: 50, textAlign: 'center' }}>
         <h2 style={{ color: 'red' }}>⚠️ Cannot Connect to Backend</h2>
         <p>Error: {error}</p>
+        <p>Backend URL: {API_URL}</p>
         <Button onClick={fetchData}>Retry</Button>
       </div>
     );
@@ -447,6 +457,7 @@ function App() {
       <div style={{ marginTop: 24, padding: 16, textAlign: 'center', color: '#999', borderTop: '1px solid #e8e8e8' }}>
         <p>🔄 Auto-refreshes every 30 seconds | 💱 Live currency rates | 🔐 Secure authentication | ✅ Version 2.0</p>
         <p style={{ fontSize: 12 }}>Exchange rate: 1 USD = {exchangeRate?.toFixed(4) || 'loading...'} GBP</p>
+        <p style={{ fontSize: 11, color: '#ccc' }}>Backend: {API_URL}</p>
       </div>
     </div>
   );
