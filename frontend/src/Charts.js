@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col } from 'antd';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d'];
 
 function Charts() {
@@ -9,11 +9,11 @@ function Charts() {
   const [brandData, setBrandData] = useState([]);
 
   useEffect(() => {
-    fetch('${API_URL}/api/v1/dashboard/orders-by-supplier')
+    fetch('http://localhost:8000/api/v1/dashboard/orders-by-supplier')
       .then(res => res.json())
       .then(data => setSupplierData(data));
     
-    fetch('${API_URL}/api/v1/dashboard/orders-by-brand')
+    fetch('http://localhost:8000/api/v1/dashboard/orders-by-brand')
       .then(res => res.json())
       .then(data => setBrandData(data));
   }, []);
