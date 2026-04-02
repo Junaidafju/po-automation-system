@@ -1,14 +1,5 @@
 # PO Automation System - Complete Documentation
-<div align="center">
 
-[![Version](https://img.shields.io/badge/version-2.0-blue.svg)](https://github.com/Junaidafju/po-automation-system)
-[![Python](https://img.shields.io/badge/python-3.11-green.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/fastapi-0.104-blue.svg)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/react-18.2-blue.svg)](https://reactjs.org/)
-[![Render](https://img.shields.io/badge/deployed-Render-purple.svg)](https://render.com)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-
-</div>
 
 
 ## Step 1: Create Main Documentation
@@ -38,8 +29,6 @@ An enterprise-grade **Purchase Order Automation System** that eliminates manual 
 ---
 
 ## 🏗️ System Architecture
-
-```
 ┌─────────────────────────────────────────────────────────────┐
 │                    User Browser (Port 3000)                  │
 │                    React Single Page App                     │
