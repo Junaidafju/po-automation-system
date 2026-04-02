@@ -29,8 +29,6 @@ An enterprise-grade **Purchase Order Automation System** that eliminates manual 
 ---
 
 ## 🏗️ System Architecture
-
-```
 ┌─────────────────────────────────────────────────────────────┐
 │                    User Browser (Port 3000)                  │
 │                    React Single Page App                     │
