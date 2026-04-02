@@ -7,13 +7,13 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d'
 function Charts() {
   const [supplierData, setSupplierData] = useState([]);
   const [brandData, setBrandData] = useState([]);
-
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
   useEffect(() => {
-    fetch('http://localhost:8000/api/v1/dashboard/orders-by-supplier')
+    fetch(`${API_URL}/api/v1/dashboard/orders-by-supplier` )
       .then(res => res.json())
       .then(data => setSupplierData(data));
     
-    fetch('http://localhost:8000/api/v1/dashboard/orders-by-brand')
+    fetch(`${API_URL}/api/v1/dashboard/orders-by-brand`)
       .then(res => res.json())
       .then(data => setBrandData(data));
   }, []);
