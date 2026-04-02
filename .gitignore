@@ -1,0 +1,66 @@
+# Node modules
+node_modules/
+frontend/node_modules/
+frontend/.cache/
+frontend/build/
+frontend/dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+.venv/
+env/
+backend/venv/
+backend/__pycache__/
+backend/uploads/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+ehthumbs.db
+.DS_Store
+
+# Uploads
+uploads/
+temp/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Testing
+coverage/
+.pytest_cache/
+.tox/
+
+# Secrets
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
