@@ -1,0 +1,43 @@
+from sqlalchemy import Column, Integer, String, Float, Date, DateTime, Text, ForeignKey
+from sqlalchemy.sql import func
+from ..core.database import Base
+
+class PurchaseOrder(Base):
+    __tablename__ = "purchase_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    po_number = Column(String(50), unique=True, nullable=False, index=True)
+    version = Column(Integer, default=1)
+    supplier_id = Column(Integer, ForeignKey("suppliers.id"))
+    supplier_reference = Column(String(100))
+    brand_id = Column(Integer, ForeignKey("brands.id"))
+    buyer_name = Column(String(100))
+    buyer_email = Column(String(255))
+    department = Column(String(100))
+    category = Column(String(100))
+    style_number = Column(String(100))
+    product_description = Column(Text)
+    color = Column(String(50))
+    size = Column(String(20))
+    ean = Column(String(50))
+    total_order_qty = Column(Integer)
+    unit_price_usd = Column(Float)
+    unit_price_gbp = Column(Float)
+    total_usd_value = Column(Float)
+    total_gbp_value = Column(Float)
+    currency = Column(String(3), default="GBP")
+    exchange_rate = Column(Float)
+    uk_po_recd_date = Column(Date)
+    confirmed_ex_factory = Column(Date)
+    revised_ex_factory = Column(Date)
+    delivery_date = Column(Date)
+    shipment_book_with_forwarder = Column(Date)
+    mode = Column(String(20))
+    port_of_loading = Column(String(50))
+    incoterms = Column(String(20))
+    sustainable = Column(String(10), default="N")
+    fabric_country_of_origin = Column(String(10))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    extracted_from_pdf = Column(String(255))
+    extraction_status = Column(String(20), default="pending")
