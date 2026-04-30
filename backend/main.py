@@ -83,21 +83,33 @@ def generate_sample_data():
     suppliers = ['BANSWARA', 'WINDESON TRADEMART', 'N&A Design', 'MIR', 'CREST DESIGN', 'NAMDEV']
     brands = ['BOOHOO', 'COAST', 'PRETTYLITTLETHING', 'NASTYGAL', 'WALLIS', 'WAREHOUSE']
     buyers = ['John Smith', 'Sarah Johnson', 'Mike Brown', 'Emma Wilson', 'James Taylor']
+    styles = ['STY-1001', 'STY-1002', 'STY-1003', 'STY-1004', 'STY-1005']
+    colors = ['Black', 'Navy', 'Red', 'White', 'Blue']
+    currencies = ['GBP', 'USD', 'EUR']
     
     for i in range(50):
         delivery_date = datetime.now() + timedelta(days=random.randint(30, 180))
+        qty = random.randint(50, 500)
+        unit_price = round(random.uniform(5.0, 50.0), 2)
+        total_val = round(qty * unit_price, 2)
         orders.append({
             "id": i + 1,
             "po_number": f"PO-2024-{str(i+1000).zfill(4)}",
             "supplier": random.choice(suppliers),
             "brand": random.choice(brands),
             "buyer_name": random.choice(buyers),
-            "total_order_qty": random.randint(50, 500),
-            "total_gbp_value": round(random.uniform(500, 5000), 2),
+            "style": random.choice(styles),
+            "color": random.choice(colors),
+            "unit_price": unit_price,
+            "currency": random.choice(currencies),
+            "total_order_qty": qty,
+            "total_value": total_val,
+            "total_gbp_value": total_val, # keeping this for backward compat if needed in KPI, though we should probably update KPI too
             "delivery_date": delivery_date.strftime("%Y-%m-%d"),
             "confirmed_ex_factory": (delivery_date - timedelta(days=random.randint(30, 60))).strftime("%Y-%m-%d"),
             "status": "completed"
         })
+
 
 # ============================================
 # PDF Extraction Functions
@@ -112,7 +124,11 @@ def extract_pdf_data(file_path: str) -> Dict:
         "buyer": None,
         "delivery_date": None,
         "quantity": 0,
-        "total_value": 0
+        "total_value": 0,
+        "currency": "GBP",
+        "style": None,
+        "color": None,
+        "unit_price": 0
     }
     
     try:
@@ -122,7 +138,7 @@ def extract_pdf_data(file_path: str) -> Dict:
                 text += page.extract_text() or ""
         
         # Extract PO Number
-        po_match = re.search(r'Purchase Order No[:\s]*([A-Z0-9]+)', text, re.IGNORECASE)
+        po_match = re.search(r'(?:Purchase Order|PO)[\s]*(?:No\.?|Number|#)?[\s]*[:\-]?[\s]*([A-Z0-9\-]+)', text, re.IGNORECASE)
         if po_match:
             extracted['po_number'] = po_match.group(1)
         
@@ -145,7 +161,26 @@ def extract_pdf_data(file_path: str) -> Dict:
         date_match = re.search(r'Delivery Date[:\s]*(\d{2}/\d{2}/\d{4})', text, re.IGNORECASE)
         if date_match:
             extracted['delivery_date'] = date_match.group(1)
-        
+
+        # Extract Currency
+        if '$' in text or 'USD' in text:
+            extracted['currency'] = 'USD'
+        elif '€' in text or 'EUR' in text:
+            extracted['currency'] = 'EUR'
+        else:
+            extracted['currency'] = 'GBP'
+
+        # Extract Style, Color, Unit Price (Basic regex for common PO formats)
+        style_match = re.search(r'(?:Style|Style No|Style Number)[\s]*[:\-]?[\s]*([A-Z0-9\-]+)', text, re.IGNORECASE)
+        if style_match:
+            extracted['style'] = style_match.group(1)
+        color_match = re.search(r'(?:Colour|Color)[\s]*[:\-]?[\s]*([A-Za-z]+)', text, re.IGNORECASE)
+        if color_match:
+            extracted['color'] = color_match.group(1)
+        price_match = re.search(r'(?:Unit Price|Price)[\s]*[:\-]?[\s]*[£$€]?[\s]*([0-9]+\.[0-9]{2})', text, re.IGNORECASE)
+        if price_match:
+            extracted['unit_price'] = float(price_match.group(1))
+
         # Extract from tables
         with pdfplumber.open(file_path) as pdf:
             for page in pdf.pages:
@@ -158,7 +193,10 @@ def extract_pdf_data(file_path: str) -> Dict:
                                     if cell.isdigit() and len(cell) > 2:
                                         extracted['quantity'] = int(cell)
                                     if '.' in cell and cell.replace('.', '').replace(',', '').isdigit():
-                                        extracted['total_value'] = float(cell.replace(',', ''))
+                                        # Only override total_value if it looks like a large total, not unit price
+                                        val = float(cell.replace(',', ''))
+                                        if val > extracted['total_value']:
+                                            extracted['total_value'] = val
     
     except Exception as e:
         print(f"PDF extraction error: {e}")
@@ -188,17 +226,20 @@ def validate_order_data(order_data: Dict) -> Dict:
     validated = {}
     
     # Validate PO Number
-    po_number = order_data.get('po_number', '').strip()
+    po_number = order_data.get('po_number', '') or ''
+    po_number = po_number.strip()
     if not po_number:
         po_number = f"PO-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
     validated['po_number'] = po_number
     
     # Validate supplier
-    supplier = order_data.get('supplier', '').strip()
+    supplier = order_data.get('supplier', '') or ''
+    supplier = supplier.strip()
     validated['supplier'] = supplier if supplier else "Unknown Supplier"
     
     # Validate brand
-    brand = order_data.get('brand', '').strip().upper()
+    brand = order_data.get('brand', '') or ''
+    brand = brand.strip().upper()
     validated['brand'] = brand if brand else "Unknown Brand"
     
     # Validate quantity
@@ -206,8 +247,13 @@ def validate_order_data(order_data: Dict) -> Dict:
     validated['total_order_qty'] = max(1, int(quantity)) if quantity else 1
     
     # Validate price
-    price = order_data.get('total_gbp_value', 0)
-    validated['total_gbp_value'] = max(0, float(price)) if price else 0
+    price = order_data.get('total_value', 0)
+    validated['total_value'] = max(0, float(price)) if price else 0
+
+    validated['currency'] = order_data.get('currency', 'GBP')
+    validated['style'] = order_data.get('style', 'Unknown')
+    validated['color'] = order_data.get('color', 'Unknown')
+    validated['unit_price'] = order_data.get('unit_price', 0.0)
     
     # Validate dates
     delivery_date = order_data.get('delivery_date')
@@ -230,7 +276,8 @@ def calculate_kpi_metrics():
         return {"total_orders": 0, "total_value": 0, "avg_value": 0, "active_suppliers": 0, "active_brands": 0}
     
     total_orders = len(orders)
-    total_value = sum(o.get("total_gbp_value", 0) for o in orders)
+    # Using total_value directly. Real app would do cross-currency conversion here, but simple sum is okay for dashboard KPI
+    total_value = sum(o.get("total_value", o.get("total_gbp_value", 0)) for o in orders)
     avg_value = total_value / total_orders
     
     suppliers = set(o.get("supplier") for o in orders if o.get("supplier"))
@@ -252,7 +299,7 @@ def get_supplier_stats():
         if supplier not in stats:
             stats[supplier] = {"order_count": 0, "total_value": 0}
         stats[supplier]["order_count"] += 1
-        stats[supplier]["total_value"] += order.get("total_gbp_value", 0)
+        stats[supplier]["total_value"] += order.get("total_value", order.get("total_gbp_value", 0))
     
     return [{"supplier": k, "order_count": v["order_count"], "total_value": round(v["total_value"], 2)} 
             for k, v in stats.items()]
@@ -265,7 +312,7 @@ def get_brand_stats():
         if brand not in stats:
             stats[brand] = {"order_count": 0, "total_value": 0}
         stats[brand]["order_count"] += 1
-        stats[brand]["total_value"] += order.get("total_gbp_value", 0)
+        stats[brand]["total_value"] += order.get("total_value", order.get("total_gbp_value", 0))
     
     return [{"brand": k, "order_count": v["order_count"], "total_value": round(v["total_value"], 2)} 
             for k, v in stats.items()]
@@ -371,8 +418,12 @@ async def upload_pdf(file: UploadFile = File(...)):
             "brand": extracted.get('brand'),
             "buyer_name": extracted.get('buyer'),
             "total_order_qty": extracted.get('quantity'),
-            "total_gbp_value": extracted.get('total_value'),
-            "delivery_date": extracted.get('delivery_date')
+            "total_value": extracted.get('total_value'),
+            "delivery_date": extracted.get('delivery_date'),
+            "currency": extracted.get('currency'),
+            "style": extracted.get('style'),
+            "color": extracted.get('color'),
+            "unit_price": extracted.get('unit_price')
         })
         
         # Create new order
@@ -383,7 +434,12 @@ async def upload_pdf(file: UploadFile = File(...)):
             "brand": validated_data['brand'],
             "buyer_name": extracted.get('buyer') or "Unknown Buyer",
             "total_order_qty": validated_data['total_order_qty'],
-            "total_gbp_value": validated_data['total_gbp_value'],
+            "total_value": validated_data['total_value'],
+            "total_gbp_value": validated_data['total_value'], # backward compat
+            "currency": validated_data['currency'],
+            "style": validated_data['style'],
+            "color": validated_data['color'],
+            "unit_price": validated_data['unit_price'],
             "delivery_date": validated_data['delivery_date'],
             "confirmed_ex_factory": datetime.now().strftime("%Y-%m-%d"),
             "status": "processed",

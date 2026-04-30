@@ -20,6 +20,7 @@ import UploadSection from './UploadSection';
 import ExportButton from './ExportButton';
 import Charts from './Charts';
 import Filters from './Filters';
+import Chatbot from './components/Chatbot';
 
 function App() {
   const [kpi, setKpi] = useState(null);
@@ -228,14 +229,28 @@ function App() {
   };
 
   const columns = [
-    { title: 'PO Number', dataIndex: 'po_number', key: 'po_number', width: 150 },
-    { title: 'Supplier', dataIndex: 'supplier', key: 'supplier', width: 150 },
-    { title: 'Brand', dataIndex: 'brand', key: 'brand', width: 120, 
+    { title: 'PO Number', dataIndex: 'po_number', key: 'po_number', width: 130 },
+    { title: 'Supplier', dataIndex: 'supplier', key: 'supplier', width: 130 },
+    { title: 'Brand', dataIndex: 'brand', key: 'brand', width: 110, 
       render: (text) => <span style={{ background: '#e6f7ff', padding: '2px 8px', borderRadius: 4 }}>{text}</span> },
-    { title: 'Buyer', dataIndex: 'buyer_name', key: 'buyer_name', width: 130 },
+    { title: 'Style', dataIndex: 'style', key: 'style', width: 100 },
+    { title: 'Color', dataIndex: 'color', key: 'color', width: 90 },
+    { title: 'Buyer', dataIndex: 'buyer_name', key: 'buyer_name', width: 110 },
     { title: 'Quantity', dataIndex: 'total_order_qty', key: 'total_order_qty', width: 80, align: 'right' },
-    { title: 'Value (£)', dataIndex: 'total_gbp_value', key: 'total_gbp_value', width: 100, align: 'right', 
-      render: (v) => `£${v?.toLocaleString()}` },
+    { title: 'Unit Price', dataIndex: 'unit_price', key: 'unit_price', width: 90, align: 'right',
+      render: (v, record) => {
+        const sym = record.currency === 'USD' ? '$' : record.currency === 'EUR' ? '€' : '£';
+        return `${sym}${v?.toLocaleString() || 0}`;
+      }
+    },
+    { title: 'Total Value', dataIndex: 'total_value', key: 'total_value', width: 100, align: 'right', 
+      render: (v, record) => {
+        const sym = record.currency === 'USD' ? '$' : record.currency === 'EUR' ? '€' : '£';
+        // fallback to total_gbp_value if total_value is missing
+        const val = v || record.total_gbp_value;
+        return `${sym}${val?.toLocaleString() || 0}`;
+      }
+    },
     { title: 'Delivery Date', dataIndex: 'delivery_date', key: 'delivery_date', width: 110 },
     {
       title: 'Action',
@@ -459,6 +474,8 @@ function App() {
         <p style={{ fontSize: 12 }}>Exchange rate: 1 USD = {exchangeRate?.toFixed(4) || 'loading...'} GBP</p>
         <p style={{ fontSize: 11, color: '#ccc' }}>Backend: {API_URL}</p>
       </div>
+
+      <Chatbot orders={orders} kpi={kpi} />
     </div>
   );
 }

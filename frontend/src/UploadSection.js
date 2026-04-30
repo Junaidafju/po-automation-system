@@ -16,39 +16,38 @@ function UploadSection({ onUploadComplete }) {
     }
 
     setUploading(true);
-    const results = [];
-
-    for (const file of fileList) {
+    setUploading(true);
+    
+    const uploadPromises = fileList.map(async (file) => {
       const formData = new FormData();
-      // Make sure we're sending the actual file object
       formData.append('file', file.originFileObj || file);
       
       console.log('Uploading file:', file.name);
       
       try {
-        // Then in your upload function:
-const response = await axios.post(`${API_URL}/api/v1/upload/pdf`, formData, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-}); 
+        const response = await axios.post(`${API_URL}/api/v1/upload/pdf`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }); 
         
-        results.push({
+        message.success(`✅ ${file.name} processed successfully! PO: ${response.data.po_number}`);
+        return {
           name: file.name,
           status: 'success',
           po_number: response.data.po_number,
           data: response.data.extracted_data
-        });
-        
-        message.success(`✅ ${file.name} processed successfully! PO: ${response.data.po_number}`);
+        };
       } catch (error) {
         console.error('Upload error for', file.name, error);
-        results.push({
+        message.error(`❌ Failed to process ${file.name}`);
+        return {
           name: file.name,
           status: 'error',
           error: error.response?.data?.detail || error.message || 'Upload failed'
-        });
-        message.error(`❌ Failed to process ${file.name}`);
+        };
       }
-    }
+    });
+
+    const results = await Promise.all(uploadPromises);
 
     setUploadResults(results);
     setUploading(false);
